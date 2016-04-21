@@ -76,9 +76,9 @@ BLOCK MASS  # Mass Spectrum
    1000004     1.00000000E+05   # ~c_L
    2000004     1.00000000E+05   # ~c_R
    1000005     1.00000000E+05   # ~b_1
-   2000005     1.10000000E+05   # ~b_2
-   1000006     1.10000000E+05   # ~t_1
-   2000006     1.10000000E+05   # ~t_2
+   2000005     1.00000000E+05   # ~b_2
+   1000006     1.00000000E+05   # ~t_1
+   2000006     1.00000000E+05   # ~t_2
    1000011     1.00000000E+04   # ~e_L
    2000011     1.00000000E+04   # ~e_R
    1000012     1.00000000E+04   # ~nu_eL
@@ -89,9 +89,9 @@ BLOCK MASS  # Mass Spectrum
    2000015     1.00000000E+04   # ~tau_2
    1000016     1.00000000E+04   # ~nu_tauL
    1000021     1.00000000E+04   # ~g
-   1000022     1.0              # ~chi_10
-   1000023     4.00000000E+02   # ~chi_20
-   1000025     4.00000000E+02   # ~chi_30
+   1000022     1.               # ~chi_10
+   1000023     400.             # ~chi_20
+   1000025     400.             # ~chi_30
    1000035     1.00000000E+04   # ~chi_40
    1000024     1.00000000E+04   # ~chi_1+
    1000037     1.00000000E+04   # ~chi_2+
@@ -143,7 +143,6 @@ cmsDriver.py \
     --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n -1 || exit $? ; 
 cmsRun -e -j plhe_driver_rt.xml plhe_driver.py || exit $? ; 
 
-rm -rf  CMSSW_7_1_20_patch3
 
 
 ####################################   GEN-SIM  ####################################
@@ -151,15 +150,7 @@ rm -rf  CMSSW_7_1_20_patch3
 
 echo "============  Making GENSIM: showering..."
 
-export SCRAM_ARCH=slc6_amd64_gcc481
-if [ -r CMSSW_7_1_20_patch3/src ] ; then 
- echo release CMSSW_7_1_20_patch3 already exists
-else
-scram p CMSSW CMSSW_7_1_20_patch3
-fi
 cd CMSSW_7_1_20_patch3/src
-eval `scram runtime -sh`
-
 
 mkdir -p Configuration/GenProduction/python
 
@@ -179,9 +170,6 @@ generator = cms.EDFilter(\"Pythia8HadronizerFilter\",
         pythia8CommonSettingsBlock,
         pythia8CUEP8M1SettingsBlock,
         processParameters = cms.vstring(
-            'ResonanceDecayFilter:filter = on',
-            'ResonanceDecayFilter:mothers = 25',
-            'ResonanceDecayFilter:daughters = 5,-5',
             'JetMatching:setMad = off',
             'JetMatching:scheme = 1',
             'JetMatching:merge = on',
@@ -193,6 +181,9 @@ generator = cms.EDFilter(\"Pythia8HadronizerFilter\",
             'JetMatching:nQmatch = 5', #4 corresponds to 4-flavour scheme (no matching of b-quarks), 5 for 5-flavour scheme
             'JetMatching:nJetMax = 2', #number of partons in born matrix element for highest multiplicity         
             'JetMatching:doShowerKt = off', #off for MLM matching, turn on for shower-kT matching  
+            '25:m0 = 125.0',      # Set the mass of the Higgs to 125 GeV
+            '25:onMode = off',    # Turn off all higgs decays 
+            '25:onIfAny = 5 -5',  # Turn on decays that include a b or a bbar
         ),
         parameterSets = cms.vstring('pythia8CommonSettings',
                                     'pythia8CUEP8M1Settings',
