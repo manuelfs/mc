@@ -196,98 +196,23 @@ scram b
 cd ../../
 cmsDriver.py Configuration/GenProduction/python/genfragment.py \
         --filein file:${PROCESS}_plhe.root \
-	--fileout file:${PROCESS}_RS-${RANDOM_SEED}_GENSIM.root \
+	--fileout file:${PROCESS}_RS-${RANDOM_SEED}_GEN.root \
 	--mc --eventcontent RAWSIM \
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,Configuration/DataProcessing/Utils.addMonitoring \
         --customise_command "process.source.setRunNumber = cms.untracked.uint32($RANDOM_SEED)" \
 	--datatier GEN-SIM \
-	--conditions MCRUN2_71_V1::All --beamspot NominalCollision2015 --step GEN,SIM --magField 38T_PostLS1 \
+	--conditions MCRUN2_71_V1::All --beamspot NominalCollision2015 --step GEN --magField 38T_PostLS1 \
 	--python_filename ${PROCESS}_gensim_cfg.py \
 	--no_exec -n -1 || exit $? ; 
 
-cmsRun -e -j SUS-RunIIWinter15GS-00160_rt.xml ${PROCESS}_gensim_cfg.py || exit $? ; 
+cmsRun -e -j SUS-RunIIWinter15GS-00160_rt.xml ${PROCESS}_gen_cfg.py || exit $? ; 
 
 #===================================================================================================
 
 ## Copy output to hadoop
-lcg-cp -b -D srmv2 --vo cms -t 2400 --verbose file:${PROCESS}_RS-${RANDOM_SEED}_GENSIM.root srm://bsrm-3.t2.ucsd.edu:8443/srm/v2/server?SFN=${OUTDIR}/${PROCESS}_RS-${RANDOM_SEED}_GENSIM.root
+lcg-cp -b -D srmv2 --vo cms -t 2400 --verbose file:${PROCESS}_RS-${RANDOM_SEED}_GEN.root srm://bsrm-3.t2.ucsd.edu:8443/srm/v2/server?SFN=${OUTDIR}/${PROCESS}_RS-${RANDOM_SEED}_GEN.root
 
 rm -rf CMSSW_7_1_20_patch3
-
-####################################   DIGI-RECO  ####################################
-#========== From https://cms-pdmv.cern.ch/mcm/public/restapi/requests/get_test/SUS-RunIISpring15DR74-00118
-
-echo "============  Making DIGI"
-
-export SCRAM_ARCH=slc6_amd64_gcc491
-if [ -r CMSSW_7_4_1_patch4/src ] ; then 
- echo release CMSSW_7_4_1_patch4 already exists
-else
-scram p CMSSW CMSSW_7_4_1_patch4
-fi
-cd CMSSW_7_4_1_patch4/src
-eval `scram runtime -sh`
-
-scram b
-cd ../../
-
-### If there's problems accessing the MinBias sample, you can use this local PU file
-#--pileup_input file:/hadoop/cms/store/user/manuelf/PileUp/MinBias_TuneCUETP8M1_13TeV-pythia8__RunIIWinter15GS__MCRUN2_71_V1-v1__GEN-SIM.root \
-
-cmsDriver.py step1 \
---filein file:${PROCESS}_RS-${RANDOM_SEED}_GENSIM.root \
---fileout file:${PROCESS}_RS-${RANDOM_SEED}_DIGIRAW.root \
---pileup_input dbs:/MinBias_TuneCUETP8M1_13TeV-pythia8/RunIIWinter15GS-MCRUN2_71_V1-v1/GEN-SIM \
---mc --eventcontent RAWSIM --pileup 2015_25ns_Startup_PoissonOOTPU \
---customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,Configuration/DataProcessing/Utils.addMonitoring \
---datatier GEN-SIM-RAW --conditions MCRUN2_74_V9 --step DIGI,L1,DIGI2RAW,HLT:@frozen25ns --magField 38T_PostLS1 \
---python_filename DIGIRAW_step1_cfg.py \
---no_exec -n -1 || exit $? ; 
-
-cmsRun -e -j SUS-RunIISpring15DR74-00118_rt.xml DIGIRAW_step1_cfg.py || exit $? ; 
-
-echo "============  Making AODSIM"
-cmsDriver.py step2 \
---filein file:${PROCESS}_RS-${RANDOM_SEED}_DIGIRAW.root \
---fileout file:${PROCESS}_RS-${RANDOM_SEED}_AODSIM.root \
---mc --eventcontent AODSIM,DQM \
---customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,Configuration/DataProcessing/Utils.addMonitoring \
---datatier AODSIM,DQMIO --conditions MCRUN2_74_V9 --step RAW2DIGI,L1Reco,RECO,EI,DQM:DQMOfflinePOGMC \
---magField 38T_PostLS1 --python_filename AODSIM_step2_cfg.py --no_exec -n -1 || exit $? ; 
-
-cmsRun -e -j SUS-RunIISpring15DR74-00118_2_rt.xml AODSIM_step2_cfg.py || exit $? ; 
-
-
-#===================================================================================================
-
-
-echo "============  Making MINIAODSIM..."
-  
-export SCRAM_ARCH=slc6_amd64_gcc491
-if [ -r CMSSW_7_4_14/src ] ; then 
- echo release CMSSW_7_4_14 already exists
-else
-scram p CMSSW CMSSW_7_4_14
-fi
-cd CMSSW_7_4_14/src
-eval `scram runtime -sh`
-
-scram b
-cd ../../
-cmsDriver.py step1 --filein file:${PROCESS}_RS-${RANDOM_SEED}_AODSIM.root \
-	     --fileout file:${PROCESS}${TAG}_madgraphMLM-pythia8_RunIISpring15MiniAODv2-FastAsympt25ns_74X_RS-${RANDOM_SEED}_MINIAODSIM.root \
-	     --mc --eventcontent MINIAODSIM --runUnscheduled --fast \
-	     --customise SLHCUpgradeSimulations/Configuration/postLS1CustomsPreMixing.customisePostLS1,Configuration/DataProcessing/Utils.addMonitoring \
-	     --datatier MINIAODSIM --conditions 74X_mcRun2_asymptotic_v2 \
-	     --step PAT --python_filename mini_driver.py --no_exec -n -1 || exit $? ; 
-cmsRun -e -j mini_rt.xml mini_driver.py || exit $? ;
-
-echo "Copy MiniAODv2 to hadoop"
-
-lcg-cp -b -D srmv2 --vo cms -t 2400 --verbose file:${PROCESS}${TAG}_madgraphMLM-pythia8_RunIISpring15MiniAODv2-FastAsympt25ns_74X_RS-${RANDOM_SEED}_MINIAODSIM.root srm://bsrm-3.t2.ucsd.edu:8443/srm/v2/server?SFN=${OUTDIR}/${PROCESS}${TAG}_madgraphMLM-pythia8_RunIISpring15MiniAODv2-FastAsympt25ns_74X_RS-${RANDOM_SEED}_MINIAODSIM.root
-
-
-rm -rf CMSSW_7_4_14
 rm *root *lhe *xml *py
 
 echo "Bye."

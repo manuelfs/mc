@@ -4,16 +4,16 @@ mc
 Code for private production of FullSim MC points.
 
 #### Generate gridpack
-In lxplus, check out [genproductions](https://github.com/cms-sw/genproductions) 
+In lxplus, check out [genproductions](https://github.com/cms-sw/genproductions), place the
+`cards/TChiHH_mChi-400` folder into `genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/`, and send
+a job to the lxplus batch as instructed in the [aMCatNLO
+twiki](https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuickGuideMadGraph5aMCatNLO#Quick_tutorial_on_how_to_produce):
 
     git clone https://github.com/cms-sw/genproductions
-    cd genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/
-    mkdir TChiHH_mChi-400
-    
-Place the `cards/TChiHH_mChi-400` folder into `genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/`, and send a job to the lxplus batch as instructed in the [aMCatNLO twiki](https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuickGuideMadGraph5aMCatNLO#Quick_tutorial_on_how_to_produce):
-
-    kinit -Af manuelf@CERN.CH
+    git clone https://github.com/manuelfs/mc
+    cp -r mc/cards/TChiHH_mChi-400 genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/
     cd ~/work/code/genproductions/bin/MadGraph5_aMCatNLO
+    kinit -Af manuelf@CERN.CH
     ./submit_gridpack_generation.sh 12000 12000 1nw TChiHH_mChi-400 cards/production/13TeV/TChiHH_mChi-400/ 8nh
 
 This generates a gridback in the file `TChiHH_mChi-400_tarball.tar.xz`.
