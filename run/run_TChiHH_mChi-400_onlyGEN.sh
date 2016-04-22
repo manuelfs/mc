@@ -202,7 +202,7 @@ cmsDriver.py Configuration/GenProduction/python/genfragment.py \
         --customise_command "process.source.setRunNumber = cms.untracked.uint32($RANDOM_SEED)" \
 	--datatier GEN-SIM \
 	--conditions MCRUN2_71_V1::All --beamspot NominalCollision2015 --step GEN --magField 38T_PostLS1 \
-	--python_filename ${PROCESS}_gensim_cfg.py \
+	--python_filename ${PROCESS}_gen_cfg.py \
 	--no_exec -n -1 || exit $? ; 
 
 cmsRun -e -j SUS-RunIIWinter15GS-00160_rt.xml ${PROCESS}_gen_cfg.py || exit $? ; 

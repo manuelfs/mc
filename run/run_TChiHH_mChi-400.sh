@@ -233,11 +233,12 @@ cd ../../
 
 ### If there's problems accessing the MinBias sample, you can use this local PU file
 #--pileup_input file:/hadoop/cms/store/user/manuelf/PileUp/MinBias_TuneCUETP8M1_13TeV-pythia8__RunIIWinter15GS__MCRUN2_71_V1-v1__GEN-SIM.root \
+#--pileup_input dbs:/MinBias_TuneCUETP8M1_13TeV-pythia8/RunIIWinter15GS-MCRUN2_71_V1-v1/GEN-SIM \
 
 cmsDriver.py step1 \
 --filein file:${PROCESS}_RS-${RANDOM_SEED}_GENSIM.root \
 --fileout file:${PROCESS}_RS-${RANDOM_SEED}_DIGIRAW.root \
---pileup_input dbs:/MinBias_TuneCUETP8M1_13TeV-pythia8/RunIIWinter15GS-MCRUN2_71_V1-v1/GEN-SIM \
+--pileup_input file:/hadoop/cms/store/user/manuelf/PileUp/MinBias_TuneCUETP8M1_13TeV-pythia8__RunIIWinter15GS__MCRUN2_71_V1-v1__GEN-SIM.root \
 --mc --eventcontent RAWSIM --pileup 2015_25ns_Startup_PoissonOOTPU \
 --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,Configuration/DataProcessing/Utils.addMonitoring \
 --datatier GEN-SIM-RAW --conditions MCRUN2_74_V9 --step DIGI,L1,DIGI2RAW,HLT:@frozen25ns --magField 38T_PostLS1 \
