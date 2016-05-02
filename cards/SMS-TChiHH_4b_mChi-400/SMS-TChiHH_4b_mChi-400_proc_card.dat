@@ -8,4 +8,4 @@ generate p p > n3 n2 @1
 add process p p > n3 n2 j @2
 add process p p > n3 n2 j j @3
 
-output TChiHH_mChi-400 -nojpeg
+output SMS-TChiHH_4b_mChi-400 -nojpeg
