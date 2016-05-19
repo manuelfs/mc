@@ -12,6 +12,7 @@ txt/data_card*
 # Compiled Dynamic libraries
 *.so
 *.d
+*.pcm
 
 # Compiled Static libraries
 *.lai
