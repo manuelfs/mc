@@ -10,6 +10,7 @@
 #include "TLegend.h"
 #include "TF1.h"
 #include "TAxis.h"
+#include "TStyle.h"
 #include "TGraphErrors.h"
 
 using namespace std;
@@ -17,10 +18,15 @@ using std::cout;
 using std::endl;
 
 TString RoundNumber(double num, int decimals, double denom=1.);
-
+void setCanvas(TCanvas &can, float lMargin, float tMargin, float rMargin, float bMargin);
 
 TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
-  TCanvas can;
+  //// Creating canvas
+  gStyle->SetOptStat(0);  
+  float lMargin(0.14), tMargin(0.08), rMargin(0.04), bMargin(0.14);
+  TCanvas can("canvas","", 700, 600);
+  setCanvas(can, lMargin, tMargin, rMargin, bMargin);
+  float Xmin(700), Xmax(1750), Ymin(0), Ymax(1800);
 
   ifstream filexsec("txt/"+particle+"_xsec.txt");
   vector<float> mass, emass, xsec, exsec;
@@ -34,12 +40,6 @@ TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
     xsec.push_back(sxsec.Atof()*1000);
     exsec.push_back(sexsec.Atof()*xsec[xsec.size()-1]/100.);
   }
-
-  double legX = 0.55, legY = 0.87;
-  double legW = 0.12, legH = 0.074*2;
-  TLegend leg(legX, legY-legH, legX+legW, legY);
-  leg.SetTextSize(0.056); leg.SetFillColor(0); leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.SetTextFont(132);
 
   TString fit_func = "[0]*pow(x, -[1]*exp(x*[2]))";
   TF1 expfit("expfit",fit_func, minx,maxx);
@@ -55,20 +55,42 @@ TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
   polyfit.SetLineColor(4);
 
   TGraphErrors graph(mass.size(), &mass[0], &xsec[0], &emass[0], &exsec[0]);
-  graph.SetTitle("");
-  graph.Draw("ALP");
+  TGraphErrors graph2(mass.size(), &mass[0], &xsec[0], &emass[0], &emass[0]);
+  graph.SetTitle("Fit from "+RoundNumber(minx,0)+" to "+RoundNumber(maxx,0));
+  graph.SetLineColor(1); graph.SetFillColor(kOrange); graph.SetLineWidth(1); graph.SetLineStyle(2);
+  graph.Draw("a3");
+  graph2.SetLineColor(1); graph2.SetLineWidth(1); graph2.SetLineStyle(2);
+  graph2.Draw("L same");
   graph.Fit(&expfit,"M Q N","",minx,maxx);
-  //graph.Fit(&polyfit,"M Q N","",minx,maxx);
-  polyfit.Draw("same");
+  graph.Fit(&polyfit,"M Q N","",minx,maxx);
   expfit.Draw("same");
-  graph.GetXaxis()->SetTitle(particle+" mass (GeV)");
-  graph.GetYaxis()->SetTitle("Cross section (fb)"); 
+  polyfit.Draw("same");
 
-  TString leglabel = "m_{"+particle+"}^{-"+RoundNumber(polyfit.GetParameter(1),1)+"}";
-  leg.AddEntry(&polyfit, leglabel);
-  leglabel = "m_{"+particle+"}^{-"+RoundNumber(expfit.GetParameter(1),1)+" e^{" 
-    +RoundNumber(expfit.GetParameter(2),6)+"m_{"+particle+"}}}";
-  leg.AddEntry(&expfit, leglabel);
+  graph.GetXaxis()->SetLabelFont(42);
+  graph.GetXaxis()->SetLabelSize(0.035);
+  graph.GetXaxis()->SetTitleFont(42);
+  graph.GetXaxis()->SetTitleSize(0.05);
+  graph.GetXaxis()->SetTitleOffset(1.2);
+  graph.GetXaxis()->SetLabelOffset(0.009);
+  graph.GetXaxis()->SetTitle(particle+" mass [GeV]");
+  graph.GetYaxis()->SetLabelFont(42);
+  graph.GetYaxis()->SetLabelSize(0.035);
+  graph.GetYaxis()->SetTitleFont(42);
+  graph.GetYaxis()->SetTitleSize(0.05);
+  graph.GetYaxis()->SetTitleOffset(1.35);
+  graph.GetYaxis()->SetTitle(particle+" pair-production cross section [fb]");
+
+  double legX = 0.37, legY = 0.87;
+  double legW = 0.12, legH = 0.12*2;
+  TLegend leg(legX, legY-legH, legX+legW, legY);
+  leg.SetTextSize(0.056); leg.SetFillColor(0); leg.SetFillStyle(0); leg.SetBorderSize(0);
+  leg.SetTextFont(132);
+
+  TString leglabel = "1-parameter fit: m_{"+particle+"}^{-"+RoundNumber(polyfit.GetParameter(1),1)+"}";
+  leg.AddEntry(&polyfit, leglabel,"l");
+  leglabel = "2-parameter fit: m_{"+particle+"}^{-"+RoundNumber(expfit.GetParameter(1),1)+"#timese^{" 
+    +RoundNumber(expfit.GetParameter(2),6)+"#timesm_{"+particle+"}}}";
+  leg.AddEntry(&expfit, leglabel,"l");
   leg.Draw();
 
   //// Printing fit to xsec
@@ -87,14 +109,14 @@ TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
   can.SetLogy(1);
   can.SaveAs(particle+"_xsec_"+RoundNumber(minx,0)+"_"+RoundNumber(maxx,0)+".pdf");
 
-  return expfit;
+  return polyfit;
 }
 
 
 void gluino_fit(float minx=600, float maxx=2300){
   TF1 expfit = fit_xsec("gluino", minx, maxx);
-  vector<float> masses = {600, 700, 1000, 1400, 1800, 2000, 2300};
-  vector<float> xsecs = {9.20353, 3.5251, 0.325388, 0.0252977, 0.00276133, 0.000981077, 0.000219049};
+  vector<float> masses = {600, 700, 1000, 1400, 1800, 2000, 2100, 2300};
+  vector<float> xsecs = {9.20353, 3.5251, 0.325388, 0.0252977, 0.00276133, 0.000981077, 0.000591918, 0.000219049};
   cout<<endl;
   for(size_t im=0; im<masses.size(); im++){
     float xs = expfit.Eval(masses[im])/1000;
@@ -124,6 +146,15 @@ void stop_fit(float minx=100, float maxx=300){
 	<<setw(5)<<RoundNumber((xs-xsecs[im])/xsecs[im]*100,2)<<" %"<<endl;
   }
   cout<<endl;
+}
+
+void setCanvas(TCanvas &can, float lMargin, float tMargin, float rMargin, float bMargin){
+  can.SetTickx(1);
+  can.SetTicky(1);
+  can.SetLeftMargin(lMargin);
+  can.SetTopMargin(tMargin);
+  can.SetRightMargin(rMargin);
+  can.SetBottomMargin(bMargin);
 }
 
 TString RoundNumber(double num, int decimals, double denom){
