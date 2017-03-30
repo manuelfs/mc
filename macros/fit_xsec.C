@@ -48,11 +48,6 @@ TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
   expfit.SetParameter(2, 6e-5);
   expfit.SetLineWidth(4);
 
-  TF1 polyfit("polyfit","[0]*pow(x, -[1])",minx,maxx);
-  polyfit.SetParameter(0, 3e21);
-  polyfit.SetParameter(1, 7);
-  polyfit.SetLineWidth(4);
-  polyfit.SetLineColor(4);
 
   TGraphErrors graph(mass.size(), &mass[0], &xsec[0], &emass[0], &exsec[0]);
   TGraphErrors graph2(mass.size(), &mass[0], &xsec[0], &emass[0], &emass[0]);
@@ -62,6 +57,17 @@ TF1 fit_xsec(TString particle="gluino", float minx=600, float maxx=2300){
   graph2.SetLineColor(1); graph2.SetLineWidth(1); graph2.SetLineStyle(2);
   graph2.Draw("L same");
   graph.Fit(&expfit,"M Q N","",minx,maxx);
+
+  //// Important to find good initial values due to the correlation between par0 and par1
+  TF1 polyfit("polyfit","[0]*pow(x, -[1])",minx,maxx);
+  float expon = (log(expfit.Eval(maxx)) - log(expfit.Eval(minx)))/(log(minx)-log(maxx));
+  float sigma1 = expfit.Eval(maxx)/pow(maxx, -expon);
+
+  polyfit.SetParameter(0, sigma1);
+  polyfit.SetParameter(1, expon);
+  polyfit.SetLineWidth(4);
+  polyfit.SetLineColor(4);
+
   graph.Fit(&polyfit,"M Q N","",minx,maxx);
   expfit.Draw("same");
   polyfit.Draw("same");
